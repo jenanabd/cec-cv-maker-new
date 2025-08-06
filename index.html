@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEC Cv Maker</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        body{
+            font-family: Arial, sans-serif;
+            margin:0;
+            padding:0;
+            background:#f5f5f5;
+        }
+        header{
+            background:#2c3e50;
+            color:#fff;
+            padding:20px;
+            text-align:center;
+        }
+        .container{
+            padding:30px;
+            max-width:1200px;
+            margin:auto;
+        }
+        .form-container, .preview-container{
+            background:#fff;
+            padding:20px;
+            border-radius:8px;
+            box-shadow:0 0 10px rgba(0,0,0,0.1);
+            margin-bottom:25px;
+        }
+        label{ font-weight:bold; }
+        input, textarea, select{
+            width:100%;
+            padding:10px;
+            margin-top:4px;
+            margin-bottom:15px;
+            border:1px solid #ddd;
+            border-radius:4px;
+        }
+        button{background:#ff0000;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:15px;}
+        button:hover{background:#1a252f;}
+        .photo-upload img{max-width:150px;max-height:150px;display:block;margin-top:10px;}
+        #download-btn{display:none;text-align:center;margin-top:20px;}
+    </style>
+</head>
+<body>
+<header style="background:linear-gradient(90deg, #ff0000, #5b2c06);color:#fff;padding:20px;text-align:center;"><img src="./CEC-LOGO_Black.png" style="height:120px;display:block;margin:auto;"/><h1>CEC Cv Maker</h1><p>Fill the information & generate professional CV automatically</p>
+</header>
+<div class="container">
+    <div class="form-container">
+        <form id="cv-form">
+            <h2>Personal Information</h2>
+            <label>Full Name</label>
+            <input type="text" id="name" required>
+            <label>Email</label>
+            <input type="email" id="email" required>
+            <label>Phone</label>
+            <input type="tel" id="phone" required>
+            <label>Address</label>
+            <textarea id="address" rows="2"></textarea>
+            <div class="photo-upload">
+                <label>Upload Photo</label>
+                <input type="file" id="photo" accept="image/*" onchange="previewPhoto(event)">
+                <img id="photo-preview" src="" alt="preview"/>
+            </div>
+            <h2>Education</h2>
+            <div id="education-container">
+                <input type="text" placeholder="Degree" class="degree">
+                <input type="text" placeholder="Institution" class="school">
+                <input type="text" placeholder="Year" class="year">
+            </div>
+            <button type="button" onclick="addEducation()">Add Education</button>
+            <h2>Experience</h2>
+            <div id="experience-container">
+                <input type="text" placeholder="Job Title" class="job-title">
+                <input type="text" placeholder="Company" class="company">
+                <input type="text" placeholder="Period" class="period">
+                <textarea placeholder="Description" class="job-description" rows="2"></textarea>
+            </div>
+            <button type="button" onclick="addExperience()">Add Experience</button>
+            <h2>Skills (comma separated)</h2>
+            <textarea id="skills"></textarea>
+            <button type="button" onclick="generateCV()">Generate CV</button>
+        </form>
+    </div>
+    <div class="preview-container" id="cv-preview">
+        <h3>Preview will appear here after generation</h3>
+    </div>
+    <div id="download-btn">
+        <button onclick="downloadCV()">Download PDF</button>
+    </div>
+</div>
+<script>
+function previewPhoto(event){
+    const img=document.getElementById('photo-preview');
+    img.src=URL.createObjectURL(event.target.files[0]);
+}
+function addEducation(){
+    const c=document.getElementById('education-container');
+    c.insertAdjacentHTML('beforeend',`<hr><input class='degree' placeholder='Degree'><input class='school' placeholder='Institution'><input class='year' placeholder='Year'>`);
+}
+function addExperience(){
+    const c=document.getElementById('experience-container');
+    c.insertAdjacentHTML('beforeend',`<hr><input class='job-title' placeholder='Job Title'><input class='company' placeholder='Company'><input class='period' placeholder='Period'><textarea class='job-description' placeholder='Description' rows='2'></textarea>`);
+}
+function generateCV(){
+    const name=document.getElementById('name').value;
+    const email=document.getElementById('email').value;
+    const phone=document.getElementById('phone').value;
+    const address=document.getElementById('address').value;
+    const skills=document.getElementById('skills').value;
+    const edu=document.querySelectorAll('#education-container .degree');
+    let eduHtml='';
+    for(let i=0;i<edu.length;i++){
+        const d=edu[i].value;
+        const s=document.querySelectorAll('#education-container .school')[i].value;
+        const y=document.querySelectorAll('#education-container .year')[i].value;
+        eduHtml+=`<p><strong>${d}</strong> - ${s} (${y})</p>`;
+    }
+    const exp=document.querySelectorAll('#experience-container .job-title');
+    let expHtml='';
+    for(let i=0;i<exp.length;i++){
+        const t=exp[i].value;
+        const c=document.querySelectorAll('#experience-container .company')[i].value;
+        const p=document.querySelectorAll('#experience-container .period')[i].value;
+        const desc=document.querySelectorAll('#experience-container .job-description')[i].value;
+        expHtml+=`<p><strong>${t}</strong> - ${c} (${p})<br>${desc}</p>`;
+    }
+    const preview=document.getElementById('cv-preview');
+    preview.innerHTML=`<div style='text-align:center'><img src='${document.getElementById('photo-preview').src}' style='width:120px;height:120px;border-radius:60px;'/><h1>${name}</h1></div><p><strong>Email:</strong> ${email} | <strong>Phone:</strong> ${phone}</p><p><strong>Address:</strong> ${address}</p><hr><h3>Education</h3>${eduHtml}<hr><h3>Experience</h3>${expHtml}<hr><h3>Skills</h3><p>${skills}</p>`;
+    document.getElementById('download-btn').style.display='block';
+}
+function downloadCV(){
+    const element = document.getElementById('cv-preview');
+    html2pdf().from(element).save('my_cv.pdf');
+}
+</script>
+</body>
+</html>
