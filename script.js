@@ -60,9 +60,10 @@ function addEducation() {
     
     newEntry.innerHTML = `
         <hr style="margin: 20px 0;">
-        <input type="text" placeholder="Degree" class="degree">
+        <input type="text" placeholder="Degree/Certificate" class="degree">
         <input type="text" placeholder="Institution" class="school">
-        <input type="text" placeholder="Year" class="year">
+        <input type="text" placeholder="Year/Duration" class="year">
+        <input type="text" placeholder="Grade/GPA (optional)" class="grade">
         <button type="button" onclick="removeEntry(this)" class="remove-btn" style="background: #e74c3c; padding: 5px 10px; font-size: 12px;">Remove</button>
     `;
     
@@ -182,7 +183,11 @@ function getFormData() {
         email: document.getElementById('email').value.trim(),
         phone: document.getElementById('phone').value.trim(),
         address: document.getElementById('address').value.trim(),
+        professionalTitle: document.getElementById('professional-title').value.trim(),
+        aboutMe: document.getElementById('about-me').value.trim(),
         skills: document.getElementById('skills').value.trim(),
+        languages: document.getElementById('languages').value.trim(),
+        interests: document.getElementById('interests').value.trim(),
         photo: photoDataURL,
         education: getEducationData(),
         experience: getExperienceData()
@@ -194,15 +199,17 @@ function getEducationData() {
     const degrees = document.querySelectorAll('#education-container .degree');
     const schools = document.querySelectorAll('#education-container .school');
     const years = document.querySelectorAll('#education-container .year');
+    const grades = document.querySelectorAll('#education-container .grade');
     
     const education = [];
     for (let i = 0; i < degrees.length; i++) {
         const degree = degrees[i].value.trim();
         const school = schools[i].value.trim();
         const year = years[i].value.trim();
+        const grade = grades[i] ? grades[i].value.trim() : '';
         
         if (degree || school || year) {
-            education.push({ degree, school, year });
+            education.push({ degree, school, year, grade });
         }
     }
     return education;
@@ -255,6 +262,12 @@ function validateFormData(data) {
         return false;
     }
     
+    // Check if at least some content is provided
+    if (!data.aboutMe && data.experience.length === 0 && data.education.length === 0 && !data.skills) {
+        showMessage('Please fill in at least your About Me, some experience, education, or skills to generate a meaningful CV.', 'error');
+        return false;
+    }
+    
     return true;
 }
 
@@ -264,229 +277,304 @@ function isValidEmail(email) {
     return emailRegex.test(email);
 }
 
-// Generate CV HTML with professional layout
+// Generate CV HTML with professional 2-column layout
 function generateCVHTML(data) {
     let html = `
         <div style="
             max-width: 800px;
             margin: 0 auto;
-            font-family: 'Georgia', serif;
-            line-height: 1.6;
-            color: #333;
+            font-family: 'Georgia', 'Times New Roman', serif;
             background: #fff;
-            padding: 40px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            min-height: 90vh;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+            font-size: 12px;
+            line-height: 1.3;
         ">
-            <!-- Header Section -->
+            <!-- Left Column (Dark Blue) -->
             <div style="
-                text-align: center;
-                border-bottom: 3px solid #2c3e50;
-                padding-bottom: 30px;
-                margin-bottom: 40px;
+                width: 35%;
+                background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+                color: white;
+                padding: 30px 25px;
+                display: flex;
+                flex-direction: column;
             ">
-                ${data.photo ? `
-                    <img src="${data.photo}" style="
-                        width: 150px;
-                        height: 150px;
-                        border-radius: 50%;
-                        object-fit: cover;
-                        border: 4px solid #2c3e50;
-                        margin-bottom: 20px;
-                        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-                    " alt="Profile Photo">
-                ` : ''}
-                <h1 style="
-                    color: #2c3e50;
-                    font-size: 2.5em;
-                    margin: 10px 0;
-                    font-weight: bold;
-                    letter-spacing: 1px;
-                ">${data.name}</h1>
-                <div style="
-                    font-size: 1.1em;
-                    color: #666;
-                    margin-top: 15px;
-                ">
-                    <span style="margin: 0 15px;"><strong>📧</strong> ${data.email}</span>
-                    <span style="margin: 0 15px;"><strong>📱</strong> ${data.phone}</span>
-                    ${data.address ? `<br><span style="margin-top: 10px; display: inline-block;"><strong>📍</strong> ${data.address}</span>` : ''}
-                </div>
-            </div>
-    `;
-    
-    // Education section
-    if (data.education.length > 0) {
-        html += `
-            <div style="margin-bottom: 40px;">
-                <h2 style="
-                    color: #2c3e50;
-                    font-size: 1.8em;
-                    margin-bottom: 20px;
-                    padding-bottom: 10px;
-                    border-bottom: 2px solid #ff0000;
-                    display: flex;
-                    align-items: center;
-                ">
-                    <span style="margin-right: 10px;">🎓</span> EDUCATION
-                </h2>
-        `;
-        data.education.forEach(edu => {
-            if (edu.degree || edu.school || edu.year) {
-                html += `
-                    <div style="
-                        margin-bottom: 20px;
-                        padding: 15px;
-                        background: #f8f9fa;
-                        border-left: 4px solid #ff0000;
-                        border-radius: 0 8px 8px 0;
-                    ">
-                        <h3 style="
-                            color: #2c3e50;
-                            margin: 0 0 5px 0;
-                            font-size: 1.2em;
-                        ">${edu.degree || 'Degree Not Specified'}</h3>
+                <!-- Profile Photo and Name -->
+                <div style="text-align: center; margin-bottom: 25px;">
+                    ${data.photo ? `
+                        <img src="${data.photo}" style="
+                            width: 120px;
+                            height: 120px;
+                            border-radius: 50%;
+                            object-fit: cover;
+                            border: 4px solid white;
+                            margin-bottom: 15px;
+                        " alt="Profile Photo">
+                    ` : ''}
+                    <h1 style="
+                        font-size: 24px;
+                        font-weight: bold;
+                        margin: 0;
+                        text-transform: uppercase;
+                        letter-spacing: 1px;
+                        text-align: center;
+                        line-height: 1.1;
+                        color: #ffffff;
+                    ">${data.name}</h1>
+                    ${data.professionalTitle ? `
                         <p style="
-                            margin: 5px 0;
-                            color: #666;
-                            font-style: italic;
-                        ">${edu.school || 'Institution Not Specified'}</p>
-                        ${edu.year ? `<p style="
-                            margin: 5px 0;
-                            color: #ff0000;
+                            font-size: 11px;
+                            margin: 8px 0 0 0;
+                            opacity: 0.9;
+                            text-align: center;
+                            color: white;
+                        ">(${data.professionalTitle})</p>
+                    ` : ''}
+                </div>
+                
+                <!-- About Me -->
+                ${data.aboutMe ? `
+                    <div style="margin-bottom: 25px;">
+                        <h2 style="
+                            font-size: 14px;
                             font-weight: bold;
-                        ">${edu.year}</p>` : ''}
+                            margin: 0 0 10px 0;
+                            color: white;
+                            border-bottom: 2px solid rgba(255,255,255,0.3);
+                            padding-bottom: 5px;
+                        ">About Me</h2>
+                        <p style="
+                            font-size: 10px;
+                            line-height: 1.4;
+                            margin: 0;
+                            text-align: justify;
+                            color: white;
+                        ">${data.aboutMe}</p>
                     </div>
-                `;
-            }
-        });
-        html += '</div>';
-    }
-    
-    // Experience section
-    if (data.experience.length > 0) {
-        html += `
-            <div style="margin-bottom: 40px;">
-                <h2 style="
-                    color: #2c3e50;
-                    font-size: 1.8em;
-                    margin-bottom: 20px;
-                    padding-bottom: 10px;
-                    border-bottom: 2px solid #ff0000;
-                    display: flex;
-                    align-items: center;
-                ">
-                    <span style="margin-right: 10px;">💼</span> PROFESSIONAL EXPERIENCE
-                </h2>
-        `;
-        data.experience.forEach(exp => {
-            if (exp.title || exp.company || exp.period || exp.description) {
-                html += `
-                    <div style="
-                        margin-bottom: 25px;
-                        padding: 20px;
-                        background: #f8f9fa;
-                        border-left: 4px solid #ff0000;
-                        border-radius: 0 8px 8px 0;
-                    ">
+                ` : ''}
+                
+                <!-- Contact Info -->
+                <div style="margin-bottom: 25px;">
+                    <h2 style="
+                        font-size: 14px;
+                        font-weight: bold;
+                        margin: 0 0 10px 0;
+                        color: white;
+                        border-bottom: 2px solid rgba(255,255,255,0.3);
+                        padding-bottom: 5px;
+                    ">Contact</h2>
+                    <div style="font-size: 10px; line-height: 1.6; color: white;">
+                        <p style="margin: 8px 0; display: flex; align-items: center; color: white;">
+                            <strong style="color: white;">Email:</strong>&nbsp;${data.email}
+                        </p>
+                        <p style="margin: 8px 0; display: flex; align-items: center; color: white;">
+                            <strong style="color: white;">Phone:</strong>&nbsp;${data.phone}
+                        </p>
+                        ${data.address ? `
+                            <p style="margin: 8px 0; display: flex; align-items: flex-start; color: white;">
+                                <strong style="color: white;">Address:</strong>&nbsp;${data.address}
+                            </p>
+                        ` : ''}
+                    </div>
+                </div>
+                
+                <!-- Languages -->
+                ${data.languages ? `
+                    <div style="margin-bottom: 25px;">
+                        <h2 style="
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin: 0 0 10px 0;
+                            color: white;
+                            border-bottom: 2px solid rgba(255,255,255,0.3);
+                            padding-bottom: 5px;
+                        ">Languages</h2>
+                        <div style="font-size: 10px; line-height: 1.5; color: white;">
+                            ${data.languages.split(',').map(lang => `
+                                <p style="margin: 5px 0; color: white;">• ${lang.trim()}</p>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <!-- Interests -->
+                ${data.interests ? `
+                    <div>
+                        <h2 style="
+                            font-size: 14px;
+                            font-weight: bold;
+                            margin: 0 0 10px 0;
+                            color: white;
+                            border-bottom: 2px solid rgba(255,255,255,0.3);
+                            padding-bottom: 5px;
+                        ">Interests</h2>
+                        <div style="font-size: 10px; line-height: 1.5; color: white;">
+                            ${data.interests.split(',').map(interest => `
+                                <p style="margin: 5px 0; color: white;">• ${interest.trim()}</p>
+                            `).join('')}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+            
+            <!-- Right Column (White) -->
+            <div style="
+                width: 65%;
+                background: white;
+                color: #333;
+                padding: 30px 25px;
+            ">
+                <!-- Experience Section -->
+                ${data.experience.length > 0 ? `
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="
+                            font-size: 16px;
+                            font-weight: bold;
+                            color: #1e3a8a;
+                            margin: 0 0 15px 0;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            border-bottom: 2px solid #1e3a8a;
+                            padding-bottom: 5px;
+                        ">Experience</h2>
+                        ${data.experience.map(exp => {
+                            if (exp.title || exp.company || exp.period || exp.description) {
+                                return `
+                                    <div style="margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #eee;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                            <div>
+                                                <h3 style="
+                                                    font-size: 12px;
+                                                    font-weight: bold;
+                                                    margin: 0;
+                                                    color: #1e3a8a;
+                                                ">${exp.title || 'Position Not Specified'}</h3>
+                                                <p style="
+                                                    font-size: 11px;
+                                                    margin: 2px 0;
+                                                    color: #666;
+                                                    font-style: italic;
+                                                ">${exp.company || 'Company Not Specified'}</p>
+                                            </div>
+                                            ${exp.period ? `
+                                                <span style="
+                                                    font-size: 9px;
+                                                    background: #f0f0f0;
+                                                    color: #1e3a8a;
+                                                    padding: 3px 8px;
+                                                    border-radius: 10px;
+                                                    font-weight: bold;
+                                                ">${exp.period}</span>
+                                            ` : ''}
+                                        </div>
+                                        ${exp.description ? `
+                                            <p style="
+                                                font-size: 10px;
+                                                line-height: 1.4;
+                                                margin: 0;
+                                                text-align: justify;
+                                                color: #444;
+                                            ">${exp.description}</p>
+                                        ` : ''}
+                                    </div>
+                                `;
+                            }
+                            return '';
+                        }).join('')}
+                    </div>
+                ` : ''}
+                
+                <!-- Education Section -->
+                ${data.education.length > 0 ? `
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="
+                            font-size: 16px;
+                            font-weight: bold;
+                            color: #1e3a8a;
+                            margin: 0 0 15px 0;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            border-bottom: 2px solid #1e3a8a;
+                            padding-bottom: 5px;
+                        ">Education</h2>
+                        ${data.education.map(edu => {
+                            if (edu.degree || edu.school || edu.year) {
+                                return `
+                                    <div style="margin-bottom: 15px; padding-bottom: 12px; border-bottom: 1px solid #eee;">
+                                        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                            <div style="flex: 1;">
+                                                <h3 style="
+                                                    font-size: 12px;
+                                                    font-weight: bold;
+                                                    margin: 0;
+                                                    color: #1e3a8a;
+                                                ">${edu.degree || 'Degree Not Specified'}</h3>
+                                                <p style="
+                                                    font-size: 11px;
+                                                    margin: 2px 0;
+                                                    color: #666;
+                                                    font-style: italic;
+                                                ">${edu.school || 'Institution Not Specified'}</p>
+                                                ${edu.grade ? `
+                                                    <p style="
+                                                        font-size: 10px;
+                                                        margin: 2px 0;
+                                                        color: #888;
+                                                    ">Grade: ${edu.grade}</p>
+                                                ` : ''}
+                                            </div>
+                                            ${edu.year ? `
+                                                <span style="
+                                                    font-size: 9px;
+                                                    background: #f0f0f0;
+                                                    color: #1e3a8a;
+                                                    padding: 3px 8px;
+                                                    border-radius: 10px;
+                                                    font-weight: bold;
+                                                ">${edu.year}</span>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            return '';
+                        }).join('')}
+                    </div>
+                ` : ''}
+                
+                <!-- Skills Summary -->
+                ${data.skills ? `
+                    <div style="margin-bottom: 30px;">
+                        <h2 style="
+                            font-size: 16px;
+                            font-weight: bold;
+                            color: #1e3a8a;
+                            margin: 0 0 15px 0;
+                            text-transform: uppercase;
+                            letter-spacing: 1px;
+                            border-bottom: 2px solid #1e3a8a;
+                            padding-bottom: 5px;
+                        ">Skills Summary</h2>
                         <div style="
                             display: flex;
-                            justify-content: space-between;
-                            align-items: start;
-                            margin-bottom: 10px;
+                            flex-wrap: wrap;
+                            gap: 8px;
                         ">
-                            <div>
-                                <h3 style="
-                                    color: #2c3e50;
-                                    margin: 0;
-                                    font-size: 1.3em;
-                                ">${exp.title || 'Position Not Specified'}</h3>
-                                <p style="
-                                    margin: 5px 0;
-                                    color: #666;
-                                    font-style: italic;
-                                    font-size: 1.1em;
-                                ">${exp.company || 'Company Not Specified'}</p>
-                            </div>
-                            ${exp.period ? `<span style="
-                                color: #ff0000;
-                                font-weight: bold;
-                                background: #fff;
-                                padding: 5px 10px;
-                                border-radius: 15px;
-                                font-size: 0.9em;
-                            ">${exp.period}</span>` : ''}
+                            ${data.skills.split(',').map(skill => `
+                                <span style="
+                                    background: #f0f4ff;
+                                    color: #1e3a8a;
+                                    padding: 5px 12px;
+                                    border-radius: 15px;
+                                    font-size: 10px;
+                                    font-weight: bold;
+                                    border: 1px solid #e0e7ff;
+                                ">${skill.trim()}</span>
+                            `).join('')}
                         </div>
-                        ${exp.description ? `<p style="
-                            margin: 15px 0 0 0;
-                            color: #444;
-                            line-height: 1.6;
-                            text-align: justify;
-                        ">${exp.description}</p>` : ''}
                     </div>
-                `;
-            }
-        });
-        html += '</div>';
-    }
-    
-    // Skills section
-    if (data.skills) {
-        const skillsArray = data.skills.split(',').map(skill => skill.trim()).filter(skill => skill);
-        if (skillsArray.length > 0) {
-            html += `
-                <div style="margin-bottom: 30px;">
-                    <h2 style="
-                        color: #2c3e50;
-                        font-size: 1.8em;
-                        margin-bottom: 20px;
-                        padding-bottom: 10px;
-                        border-bottom: 2px solid #ff0000;
-                        display: flex;
-                        align-items: center;
-                    ">
-                        <span style="margin-right: 10px;">🚀</span> SKILLS & EXPERTISE
-                    </h2>
-                    <div style="
-                        display: flex;
-                        flex-wrap: wrap;
-                        gap: 10px;
-                        padding: 20px;
-                        background: #f8f9fa;
-                        border-radius: 8px;
-                        border-left: 4px solid #ff0000;
-                    ">
-            `;
-            skillsArray.forEach(skill => {
-                html += `
-                    <span style="
-                        background: linear-gradient(45deg, #ff0000, #cc0000);
-                        color: white;
-                        padding: 8px 15px;
-                        border-radius: 20px;
-                        font-size: 0.9em;
-                        font-weight: bold;
-                        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    ">${skill}</span>
-                `;
-            });
-            html += `
-                    </div>
-                </div>
-            `;
-        }
-    }
-    
-    html += `
-            <!-- Footer -->
-            <div style="
-                text-align: center;
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 1px solid #ddd;
-                color: #666;
-                font-size: 0.9em;
-            ">
-                <p>Generated with CEC CV Maker</p>
+                ` : ''}
             </div>
         </div>
     `;
@@ -511,7 +599,7 @@ function downloadCV() {
         return;
     }
     
-    // Create a new window for PDF generation
+    // Create a new window for PDF generation with optimized styling
     const printWindow = window.open('', '_blank');
     const cvContent = element.innerHTML;
     
@@ -521,53 +609,62 @@ function downloadCV() {
         <head>
             <title>CV_${new Date().toISOString().split('T')[0]}</title>
             <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
                 body { 
-                    font-family: Arial, sans-serif; 
-                    margin: 20px; 
+                    font-family: 'Georgia', 'Times New Roman', serif; 
                     background: white;
                     color: black;
-                }
-                .cv-container { 
-                    max-width: 800px; 
-                    margin: 0 auto; 
-                }
-                h1, h2, h3 { 
-                    color: #2c3e50; 
-                    margin-bottom: 10px;
-                }
-                .section { 
-                    margin-bottom: 20px; 
-                    page-break-inside: avoid;
-                }
-                .contact-info { 
-                    background: #f8f9fa; 
-                    padding: 15px; 
-                    border-radius: 5px; 
-                    margin-bottom: 20px;
-                }
-                .experience-item, .education-item { 
-                    margin-bottom: 15px; 
-                    padding-bottom: 10px;
-                    border-bottom: 1px solid #eee;
+                    font-size: 11px;
+                    line-height: 1.2;
                 }
                 @media print {
-                    body { margin: 0; }
-                    .cv-container { max-width: none; }
+                    body { 
+                        margin: 0; 
+                        font-size: 10px;
+                    }
+                    .cv-container { 
+                        max-width: none; 
+                        height: 100vh;
+                        display: flex !important;
+                    }
+                    /* Preserve background colors in print */
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
                 }
                 @page {
-                    margin: 1in;
+                    margin: 10mm;
                     size: A4;
+                }
+                h1, h2, h3 { 
+                    color: inherit;
+                    page-break-after: avoid;
+                }
+                div { 
+                    page-break-inside: avoid;
+                }
+                img {
+                    max-width: 100px;
+                    height: auto;
+                }
+                /* Ensure background colors are preserved */
+                * {
+                    -webkit-print-color-adjust: exact;
+                    color-adjust: exact;
+                    print-color-adjust: exact;
                 }
             </style>
         </head>
         <body>
-            <div class="cv-container">
-                ${cvContent}
-            </div>
+            ${cvContent}
             <script>
                 window.onload = function() {
-                    window.print();
-                    setTimeout(function() { window.close(); }, 100);
+                    setTimeout(function() {
+                        window.print();
+                        setTimeout(function() { window.close(); }, 1000);
+                    }, 500);
                 }
             </script>
         </body>
@@ -576,7 +673,7 @@ function downloadCV() {
     
     printWindow.document.close();
     
-    showMessage('PDF print dialog opened! Use "Save as PDF" to download.', 'success');
+    showMessage('PDF print dialog opened! Make sure to enable "Background graphics" in print options to preserve the blue background color.', 'success');
     
     setTimeout(() => {
         downloadBtn.innerHTML = originalText;
@@ -694,9 +791,12 @@ function printCV() {
                     margin: 0;
                     padding: 0;
                     box-sizing: border-box;
+                    -webkit-print-color-adjust: exact;
+                    color-adjust: exact;
+                    print-color-adjust: exact;
                 }
                 body {
-                    font-family: 'Times New Roman', serif;
+                    font-family: 'Georgia', 'Times New Roman', serif;
                     margin: 0;
                     padding: 15mm;
                     line-height: 1.4;
@@ -718,6 +818,12 @@ function printCV() {
                     h1 { font-size: 20px; }
                     h2 { font-size: 16px; }
                     h3 { font-size: 14px; }
+                    /* Force background colors to print */
+                    * {
+                        -webkit-print-color-adjust: exact !important;
+                        color-adjust: exact !important;
+                        print-color-adjust: exact !important;
+                    }
                 }
                 @page {
                     margin: 15mm;
@@ -760,8 +866,13 @@ function downloadAsHTML() {
     <meta charset="UTF-8">
     <title>My CV</title>
     <style>
+        * {
+            -webkit-print-color-adjust: exact;
+            color-adjust: exact;
+            print-color-adjust: exact;
+        }
         body {
-            font-family: 'Times New Roman', serif;
+            font-family: 'Georgia', 'Times New Roman', serif;
             margin: 20px;
             line-height: 1.6;
             color: #333;
@@ -773,6 +884,13 @@ function downloadAsHTML() {
         p { margin: 5px 0; }
         img { max-width: 150px; height: auto; border-radius: 50%; }
         .center { text-align: center; }
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
     </style>
 </head>
 <body>

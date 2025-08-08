@@ -17,35 +17,56 @@
         <form id="cv-form">
             <h2>Personal Information</h2>
             <label>Full Name</label>
-            <input type="text" id="name" required>
+            <input type="text" id="name" placeholder="Enter your full name" required>
+            
             <label>Email</label>
-            <input type="email" id="email" required>
+            <input type="email" id="email" placeholder="Enter your email" required>
+            
             <label>Phone</label>
-            <input type="tel" id="phone" required>
+            <input type="tel" id="phone" placeholder="Enter your phone number" required>
+            
             <label>Address</label>
-            <textarea id="address" rows="2"></textarea>
+            <textarea id="address" placeholder="Enter your address" rows="2"></textarea>
+            
+            <label>Professional Title/Role</label>
+            <input type="text" id="professional-title" placeholder="e.g., Software Engineer, Marketing Manager">
+            
             <div class="photo-upload">
                 <label>Upload Photo</label>
                 <input type="file" id="photo" accept="image/*" onchange="previewPhoto(event)">
                 <img id="photo-preview" src="" alt="preview"/>
             </div>
+            
+            <h2>About Me / Professional Summary</h2>
+            <textarea id="about-me" placeholder="Write a brief professional summary about yourself" rows="3"></textarea>
+            
             <h2>Education</h2>
             <div id="education-container">
-                <input type="text" placeholder="Degree" class="degree">
+                <input type="text" placeholder="Degree/Certificate" class="degree">
                 <input type="text" placeholder="Institution" class="school">
-                <input type="text" placeholder="Year" class="year">
+                <input type="text" placeholder="Year/Duration" class="year">
+                <input type="text" placeholder="Grade/GPA (optional)" class="grade">
             </div>
             <button type="button" onclick="addEducation()">+ Add Another Education</button>
+            
             <h2>Experience</h2>
             <div id="experience-container">
                 <input type="text" placeholder="Job Title" class="job-title">
                 <input type="text" placeholder="Company" class="company">
-                <input type="text" placeholder="Period" class="period">
-                <textarea placeholder="Description" class="job-description" rows="2"></textarea>
+                <input type="text" placeholder="Duration (e.g., 2020-2023)" class="period">
+                <textarea placeholder="Job responsibilities and achievements" class="job-description" rows="2"></textarea>
             </div>
             <button type="button" onclick="addExperience()">+ Add Another Experience</button>
+            
             <h2>Skills (comma separated)</h2>
-            <textarea id="skills" placeholder="e.g., JavaScript, Python, Project Management, Communication"></textarea>
+            <textarea id="skills" placeholder="e.g., JavaScript, Python, Project Management, Communication" rows="3"></textarea>
+            
+            <h2>Languages</h2>
+            <textarea id="languages" placeholder="Languages you speak (e.g., English - Native, Spanish - Fluent)" rows="2"></textarea>
+            
+            <h2>Interests</h2>
+            <textarea id="interests" placeholder="Your hobbies and interests" rows="2"></textarea>
+            
             <button type="button" onclick="generateCV()">Generate CV</button>
         </form>
     </div>
