@@ -160,6 +160,10 @@ function generateCV() {
             
             showMessage('CV generated successfully!', 'success');
             
+            // Debug: Log the generated content
+            console.log('CV HTML generated:', cvHTML.substring(0, 200) + '...');
+            console.log('Preview element content length:', preview.innerHTML.length);
+            
         } catch (error) {
             console.error('Error generating CV:', error);
             showMessage('An error occurred while generating the CV. Please try again.', 'error');
@@ -501,36 +505,128 @@ function downloadCV() {
         
         const element = document.getElementById('cv-preview');
         
-        if (!element || !element.innerHTML.trim()) {
-            throw new Error('No CV content to download');
-        }
-        
-        // Configure PDF options
-        const opt = {
-            margin: 10,
-            filename: 'my_cv.pdf',
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2,
-                useCORS: true,
-                allowTaint: true
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait' 
-            }
-        };
-        
-        // Generate and download PDF
-        html2pdf().set(opt).from(element).save().then(() => {
-            showMessage('CV downloaded successfully!', 'success');
-        }).catch((error) => {
-            console.error('PDF generation error:', error);
-            showMessage('Failed to download PDF. Please try again.', 'error');
-        }).finally(() => {
+        if (!element || !element.innerHTML.trim() || element.innerHTML.includes('Preview will appear here')) {
+            showMessage('Please generate your CV first before downloading!', 'error');
             downloadBtn.innerHTML = originalText;
             downloadBtn.disabled = false;
+            return;
+        }
+        
+        // Create a clean copy of the CV content for PDF generation
+        const cleanElement = element.cloneNode(true);
+        
+        // Remove any unwanted elements or classes
+        cleanElement.className = '';
+        cleanElement.style.cssText = `
+            font-family: 'Times New Roman', serif;
+            color: #000;
+            background: #fff;
+            padding: 20px;
+            line-height: 1.4;
+            max-width: none;
+            box-shadow: none;
+        `;
+        
+        // Ensure images are properly loaded
+        const images = cleanElement.querySelectorAll('img');
+        let imageLoadPromises = [];
+        
+        images.forEach(img => {
+            if (img.src && img.src.startsWith('data:')) {
+                // Image is already a data URL, no need to wait
+                img.style.display = 'block';
+            } else if (img.src) {
+                // Create a promise for image loading
+                const promise = new Promise((resolve) => {
+                    const newImg = new Image();
+                    newImg.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        canvas.width = newImg.width;
+                        canvas.height = newImg.height;
+                        ctx.drawImage(newImg, 0, 0);
+                        img.src = canvas.toDataURL('image/jpeg', 0.8);
+                        resolve();
+                    };
+                    newImg.onerror = () => resolve(); // Continue even if image fails
+                    newImg.src = img.src;
+                });
+                imageLoadPromises.push(promise);
+            }
+        });
+        
+        // Wait for all images to load, then generate PDF
+        Promise.all(imageLoadPromises).then(() => {
+            // Configure PDF options with better settings
+            const opt = {
+                margin: [15, 15, 15, 15],
+                filename: `CV_${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { 
+                    type: 'jpeg', 
+                    quality: 0.95 
+                },
+                html2canvas: { 
+                    scale: 1.5,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff',
+                    removeContainer: true,
+                    letterRendering: true,
+                    scrollX: 0,
+                    scrollY: 0
+                },
+                jsPDF: { 
+                    unit: 'mm', 
+                    format: 'a4', 
+                    orientation: 'portrait',
+                    compress: true
+                },
+                pagebreak: { 
+                    mode: ['avoid-all', 'css', 'legacy'] 
+                }
+            };
+            
+            // Generate and download PDF
+            html2pdf()
+                .set(opt)
+                .from(cleanElement)
+                .toPdf()
+                .get('pdf')
+                .then((pdf) => {
+                    // Check if PDF has content
+                    const pdfData = pdf.output('datauristring');
+                    if (pdfData && pdfData.length > 1000) { // Basic check for content
+                        pdf.save(opt.filename);
+                        showMessage('CV downloaded successfully!', 'success');
+                    } else {
+                        throw new Error('Generated PDF appears to be empty');
+                    }
+                })
+                .catch((error) => {
+                    console.error('PDF generation error:', error);
+                    showMessage('Failed to download PDF. Trying alternative method...', 'error');
+                    
+                    // Fallback: Try with simpler options
+                    const fallbackOpt = {
+                        margin: 20,
+                        filename: `CV_${new Date().toISOString().split('T')[0]}.pdf`,
+                        image: { type: 'jpeg', quality: 0.8 },
+                        html2canvas: { scale: 1 },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+                    
+                    html2pdf().set(fallbackOpt).from(element).save()
+                        .then(() => {
+                            showMessage('CV downloaded with fallback method!', 'success');
+                        })
+                        .catch(() => {
+                            showMessage('PDF download failed. Please try again or use print to PDF.', 'error');
+                        });
+                })
+                .finally(() => {
+                    downloadBtn.innerHTML = originalText;
+                    downloadBtn.disabled = false;
+                });
         });
         
     } catch (error) {
@@ -628,3 +724,56 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+// Alternative download method using print
+function printCV() {
+    const element = document.getElementById('cv-preview');
+    if (!element || !element.innerHTML.trim() || element.innerHTML.includes('Preview will appear here')) {
+        showMessage('Please generate your CV first before printing!', 'error');
+        return;
+    }
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    const cvContent = element.innerHTML;
+    
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>CV - Print</title>
+            <style>
+                body {
+                    font-family: 'Times New Roman', serif;
+                    margin: 0;
+                    padding: 20px;
+                    line-height: 1.4;
+                    color: #000;
+                }
+                @media print {
+                    body { margin: 0; }
+                    .no-print { display: none; }
+                }
+                @page {
+                    margin: 1cm;
+                    size: A4;
+                }
+            </style>
+        </head>
+        <body>
+            ${cvContent}
+        </body>
+        </html>
+    `);
+    
+    printWindow.document.close();
+    printWindow.focus();
+    
+    // Wait a bit for content to load, then print
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 500);
+    
+    showMessage('Print dialog opened. You can save as PDF from the print options.', 'success');
+}
