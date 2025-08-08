@@ -494,170 +494,94 @@ function generateCVHTML(data) {
     return html;
 }
 
-// Download CV as PDF with proper error handling
+// Download CV as PDF - SIMPLE AND RELIABLE METHOD
 function downloadCV() {
     const downloadBtn = document.querySelector('#download-btn button');
     const originalText = downloadBtn.innerHTML;
     
-    try {
-        downloadBtn.innerHTML = 'Preparing PDF <div class="loading"></div>';
-        downloadBtn.disabled = true;
-        
-        const element = document.getElementById('cv-preview');
-        
-        if (!element || !element.innerHTML.trim() || element.innerHTML.includes('Preview will appear here')) {
-            showMessage('Please generate your CV first before downloading!', 'error');
-            downloadBtn.innerHTML = originalText;
-            downloadBtn.disabled = false;
-            return;
-        }
-        
-        // Create a simplified version for PDF generation
-        const pdfElement = createPDFElement(element);
-        
-        // Simple and reliable PDF generation with better settings
-        const opt = {
-            margin: [10, 10, 10, 10],
-            filename: `CV_${new Date().toISOString().split('T')[0]}.pdf`,
-            image: { 
-                type: 'jpeg', 
-                quality: 0.8 
-            },
-            html2canvas: { 
-                scale: 1,
-                useCORS: true,
-                allowTaint: true,
-                backgroundColor: '#ffffff',
-                logging: false,
-                removeContainer: false
-            },
-            jsPDF: { 
-                unit: 'mm', 
-                format: 'a4', 
-                orientation: 'portrait' 
-            }
-        };
-        
-        // Use the simplified element for PDF generation
-        html2pdf().from(pdfElement).set(opt).save()
-            .then(() => {
-                showMessage('CV downloaded successfully!', 'success');
-                // Clean up the temporary element
-                document.body.removeChild(pdfElement);
-            })
-            .catch((error) => {
-                console.error('PDF generation error:', error);
-                showMessage('PDF download failed. Please use the Print button instead.', 'error');
-                // Clean up the temporary element
-                if (document.body.contains(pdfElement)) {
-                    document.body.removeChild(pdfElement);
-                }
-            })
-            .finally(() => {
-                downloadBtn.innerHTML = originalText;
-                downloadBtn.disabled = false;
-            });
-        
-    } catch (error) {
-        console.error('Download error:', error);
-        showMessage('PDF download failed. Please use the Print button instead.', 'error');
+    downloadBtn.innerHTML = 'Creating PDF...';
+    downloadBtn.disabled = true;
+    
+    const element = document.getElementById('cv-preview');
+    
+    if (!element || !element.innerHTML.trim() || element.innerHTML.includes('Preview will appear here')) {
+        showMessage('Please generate your CV first before downloading!', 'error');
         downloadBtn.innerHTML = originalText;
         downloadBtn.disabled = false;
-    }
-}
-
-// Create a simplified element for PDF generation
-function createPDFElement(originalElement) {
-    const pdfElement = document.createElement('div');
-    pdfElement.style.cssText = `
-        position: absolute;
-        left: -9999px;
-        top: 0;
-        width: 800px;
-        background: white;
-        font-family: Arial, sans-serif;
-        padding: 20px;
-        line-height: 1.4;
-        color: #000;
-    `;
-    
-    // Get the form data to recreate content
-    const formData = getFormData();
-    
-    // Create simplified HTML content
-    let content = `
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 20px;">
-            ${formData.photo ? `<img src="${formData.photo}" style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; margin-bottom: 15px;" />` : ''}
-            <h1 style="font-size: 28px; margin: 10px 0; color: #000;">${formData.name}</h1>
-            <p style="font-size: 14px; margin: 5px 0;">Email: ${formData.email} | Phone: ${formData.phone}</p>
-            ${formData.address ? `<p style="font-size: 14px; margin: 5px 0;">Address: ${formData.address}</p>` : ''}
-        </div>
-    `;
-    
-    // Education section
-    if (formData.education.length > 0) {
-        content += `
-            <div style="margin-bottom: 25px;">
-                <h2 style="font-size: 18px; color: #000; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px;">EDUCATION</h2>
-        `;
-        formData.education.forEach(edu => {
-            if (edu.degree || edu.school || edu.year) {
-                content += `
-                    <div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5;">
-                        <h3 style="font-size: 14px; margin: 0 0 5px 0; font-weight: bold;">${edu.degree || 'Degree Not Specified'}</h3>
-                        <p style="margin: 3px 0; font-style: italic;">${edu.school || 'Institution Not Specified'}</p>
-                        ${edu.year ? `<p style="margin: 3px 0; font-weight: bold;">${edu.year}</p>` : ''}
-                    </div>
-                `;
-            }
-        });
-        content += '</div>';
+        return;
     }
     
-    // Experience section
-    if (formData.experience.length > 0) {
-        content += `
-            <div style="margin-bottom: 25px;">
-                <h2 style="font-size: 18px; color: #000; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px;">PROFESSIONAL EXPERIENCE</h2>
-        `;
-        formData.experience.forEach(exp => {
-            if (exp.title || exp.company || exp.period || exp.description) {
-                content += `
-                    <div style="margin-bottom: 15px; padding: 10px; background: #f5f5f5;">
-                        <h3 style="font-size: 14px; margin: 0 0 5px 0; font-weight: bold;">${exp.title || 'Position Not Specified'}</h3>
-                        <p style="margin: 3px 0; font-style: italic;">${exp.company || 'Company Not Specified'}${exp.period ? ` (${exp.period})` : ''}</p>
-                        ${exp.description ? `<p style="margin: 8px 0 0 0; line-height: 1.4;">${exp.description}</p>` : ''}
-                    </div>
-                `;
-            }
-        });
-        content += '</div>';
-    }
+    // Create a new window for PDF generation
+    const printWindow = window.open('', '_blank');
+    const cvContent = element.innerHTML;
     
-    // Skills section
-    if (formData.skills) {
-        const skillsArray = formData.skills.split(',').map(skill => skill.trim()).filter(skill => skill);
-        if (skillsArray.length > 0) {
-            content += `
-                <div style="margin-bottom: 25px;">
-                    <h2 style="font-size: 18px; color: #000; border-bottom: 1px solid #333; padding-bottom: 5px; margin-bottom: 15px;">SKILLS & EXPERTISE</h2>
-                    <p style="line-height: 1.6;">${skillsArray.join(' • ')}</p>
-                </div>
-            `;
-        }
-    }
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>CV_${new Date().toISOString().split('T')[0]}</title>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif; 
+                    margin: 20px; 
+                    background: white;
+                    color: black;
+                }
+                .cv-container { 
+                    max-width: 800px; 
+                    margin: 0 auto; 
+                }
+                h1, h2, h3 { 
+                    color: #2c3e50; 
+                    margin-bottom: 10px;
+                }
+                .section { 
+                    margin-bottom: 20px; 
+                    page-break-inside: avoid;
+                }
+                .contact-info { 
+                    background: #f8f9fa; 
+                    padding: 15px; 
+                    border-radius: 5px; 
+                    margin-bottom: 20px;
+                }
+                .experience-item, .education-item { 
+                    margin-bottom: 15px; 
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #eee;
+                }
+                @media print {
+                    body { margin: 0; }
+                    .cv-container { max-width: none; }
+                }
+                @page {
+                    margin: 1in;
+                    size: A4;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="cv-container">
+                ${cvContent}
+            </div>
+            <script>
+                window.onload = function() {
+                    window.print();
+                    setTimeout(function() { window.close(); }, 100);
+                }
+            </script>
+        </body>
+        </html>
+    `);
     
-    // Footer
-    content += `
-        <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ccc; font-size: 12px; color: #666;">
-            Generated with CEC CV Maker
-        </div>
-    `;
+    printWindow.document.close();
     
-    pdfElement.innerHTML = content;
-    document.body.appendChild(pdfElement);
+    showMessage('PDF print dialog opened! Use "Save as PDF" to download.', 'success');
     
-    return pdfElement;
+    setTimeout(() => {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+    }, 1000);
 }
 
 // Show success/error messages
