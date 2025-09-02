@@ -11,6 +11,23 @@
     <img src="./CEC-LOGO_Black.png" alt="CEC Logo"/>
     <h1>CEC CV Maker</h1>
     <p>Fill the information & generate professional CV automatically</p>
+    <script>
+  (function(d,t) {
+    var BASE_URL="https://enterprise.shrobon.com";
+    var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+    g.src=BASE_URL+"/packs/js/sdk.js";
+    g.defer = true;
+    g.async = true;
+    s.parentNode.insertBefore(g,s);
+    g.onload=function(){
+      window.chatwootSDK.run({
+        websiteToken: 'ofM7V63JUpC1eE2XbX4AWdm7',
+        baseUrl: BASE_URL
+      })
+    }
+  })(document,"script");
+</script>
+
 </header>
 <div class="container">
     <div class="form-container">
@@ -83,3 +100,4 @@
 <script src="script.js"></script>
 </body>
 </html>
+
